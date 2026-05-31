@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapSchool — Escolas de Luanda</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:    #7c3aed;
+      --pink:      #db2777;
+      --pink-soft: #f472b6;
+      --glass:     rgba(255,255,255,0.08);
+      --glass-b:   rgba(255,255,255,0.16);
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 35%, #4c1d95 65%, #831843 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    .blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.22; pointer-events: none; z-index: 0; animation: drift 12s ease-in-out infinite alternate; }
+    .blob-1 { width: 500px; height: 500px; background: #7c3aed; top: -100px; left: -100px; }
+    .blob-2 { width: 400px; height: 400px; background: #db2777; bottom: -80px; right: -80px; animation-delay: -4s; }
+    .blob-3 { width: 300px; height: 300px; background: #6d28d9; top: 40%; left: 60%; animation-delay: -8s; }
+    @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.08); } }
+
+    header {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 32px;
+    }
+    .logo { font-weight: 900; font-size: 1.3rem; letter-spacing: 4px; color: #fff; text-decoration: none; }
+    .logo span { color: var(--pink-soft); }
+    nav a {
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      font-size: 0.88rem; font-weight: bold;
+      padding: 8px 18px; border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px; transition: all 0.2s;
+    }
+    nav a:hover { color: #fff; border-color: var(--pink-soft); }
+
+    .hero { position: relative; z-index: 5; text-align: center; padding: 80px 20px 50px; }
+    .hero-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: bold; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--pink-soft);
+      border: 1px solid rgba(244,114,182,0.4); border-radius: 999px;
+      padding: 5px 16px; margin-bottom: 24px;
+    }
+    h1 { font-size: clamp(2.8rem, 7vw, 5.5rem); font-weight: 900; line-height: 1.05; letter-spacing: -1px; }
+    h1 span { color: var(--pink-soft); }
+    .subtitle { margin-top: 16px; font-size: 1rem; color: rgba(255,255,255,0.55); }
+
+    .search-section { position: relative; z-index: 10; padding: 10px 20px 0; }
+    .search-wrap {
+      max-width: 620px; margin: 0 auto;
+      background: var(--glass-b);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 18px; padding: 6px 6px 6px 20px;
+      display: flex; align-items: center; gap: 10px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-wrap:focus-within { border-color: var(--pink-soft); box-shadow: 0 8px 40px rgba(219,39,119,0.22); }
+    #pesquisa {
+      flex: 1; background: none; border: none; outline: none;
+      color: #fff; font-family: Arial, Helvetica, sans-serif;
+      font-size: 1rem; padding: 10px 0;
+    }
+    #pesquisa::placeholder { color: rgba(255,255,255,0.4); }
+    #botao {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      border: none; border-radius: 12px;
+      padding: 12px 22px; cursor: pointer;
+      color: #fff; font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold; font-size: 0.88rem;
+      display: flex; align-items: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    #botao:hover { opacity: 0.9; transform: scale(1.02); }
+    #botao svg { width: 15px; height: 15px; }
+
+    #sugestoes {
+      max-width: 620px; margin: 6px auto 0;
+      background: rgba(12,10,30,0.97);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 14px; overflow: hidden;
+      backdrop-filter: blur(20px);
+      display: none;
+    }
+    .sugestao-item {
+      padding: 13px 20px; cursor: pointer;
+      display: flex; align-items: center; gap: 14px;
+      transition: background 0.15s;
+    }
+    .sugestao-item:hover { background: rgba(255,255,255,0.07); }
+    .sug-sigla { font-weight: 900; font-size: 0.82rem; letter-spacing: 1px; color: var(--pink-soft); min-width: 52px; }
+    .sug-nome { color: rgba(255,255,255,0.75); font-size: 0.88rem; }
+    .sugestao-divider { height: 1px; background: rgba(255,255,255,0.07); }
+
+    #inf { max-width: 620px; margin: 14px auto 0; text-align: center; font-size: 0.92rem; color: var(--pink-soft); min-height: 22px; }
+
+    .cards-section { position: relative; z-index: 5; padding: 56px 24px 40px; max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 22px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .school-card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 18px; padding: 22px;
+      text-decoration: none; color: #fff;
+      transition: transform 0.2s, background 0.2s, border-color 0.2s;
+      backdrop-filter: blur(10px);
+    }
+    .school-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.11); border-color: rgba(244,114,182,0.4); }
+    .card-sigla { font-weight: 900; font-size: 1.5rem; letter-spacing: 1px; color: var(--pink-soft); margin-bottom: 8px; }
+    .card-name { font-size: 0.8rem; color: rgba(255,255,255,0.55); line-height: 1.4; }
+    .card-tag { display: inline-block; margin-top: 12px; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,114,182,0.75); border: 1px solid rgba(244,114,182,0.28); border-radius: 999px; padding: 3px 10px; }
+
+    footer { position: relative; z-index: 5; text-align: center; padding: 16px 20px 44px; }
+    footer a { color: rgba(255,255,255,0.45); font-size: 0.83rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.18); padding-bottom: 2px; }
+    footer a:hover { color: var(--pink-soft); border-color: var(--pink-soft); }
+
+    @media (max-width: 600px) {
+      header { padding: 16px 20px; }
+      .hero { padding: 50px 16px 28px; }
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <header>
+    <a class="logo" href="index.html">MAP<span>SCHOOL</span></a>
+    <nav><a href="sobre/sobre.html">Sobre</a></nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-badge">Luanda · Angola</div>
+    <h1>Encontre sua<br><span>escola</span></h1>
+    <p class="subtitle">Pesquise pelo nome, sigla ou área de estudo</p>
+  </section>
+
+  <section class="search-section">
+    <div class="search-wrap">
+      <input id="pesquisa" type="text" placeholder="Ex: ITEL, Telecomunicações, Economia…" autocomplete="off">
+      <button id="botao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Pesquisar
+      </button>
+    </div>
+    <div id="sugestoes"></div>
+    <div id="inf"></div>
+  </section>
+
+  <section class="cards-section">
+    <p class="section-label">Institutos e Escolas Médias</p>
+    <div class="cards-grid">
+      <a class="school-card" href="itel/itel.html">
+        <div class="card-sigla">ITEL</div>
+        <div class="card-name">Instituto de Telecomunicações de Luanda</div>
+        <span class="card-tag">Tecnologia</span>
+      </a>
+      <a class="school-card" href="ipil/ipil.html">
+        <div class="card-sigla">IPIL</div>
+        <div class="card-name">Instituto Politécnico Industrial de Luanda</div>
+        <span class="card-tag">Industrial</span>
+      </a>
+      <a class="school-card" href="imel/imel.html">
+        <div class="card-sigla">IMEL</div>
+        <div class="card-name">Instituto Médio de Economia de Luanda</div>
+        <span class="card-tag">Economia</span>
+      </a>
+      <a class="school-card" href="imcl/imcl.html">
+        <div class="card-sigla">IMCL</div>
+        <div class="card-name">Instituto Médio Comercial de Luanda</div>
+        <span class="card-tag">Comércio</span>
+      </a>
+      <a class="school-card" href="alda/alda.html">
+        <div class="card-sigla">IMPAL</div>
+        <div class="card-name">Instituto Médio Politécnico Alda Lara</div>
+        <span class="card-tag">Politécnico</span>
+      </a>
+      <a class="school-card" href="imne/imne.html">
+        <div class="card-sigla">IMNE</div>
+        <div class="card-name">Instituto Médio Normal de Educação Marista</div>
+        <span class="card-tag">Educação</span>
+      </a>
+      <a class="school-card" href="mutu/mutu.html">
+        <div class="card-sigla">MUTU</div>
+        <div class="card-name">Magistério Primário Mutu-ya-Kevela</div>
+        <span class="card-tag">Magistério</span>
+      </a>
+      <a class="school-card" href="imaa/imaa.html">
+        <div class="card-sigla">IMAA</div>
+        <div class="card-name">Instituto Médio de Artes de Angola</div>
+        <span class="card-tag">Artes</span>
+      </a>
+      <a class="school-card" href="emab/emab.html">
+        <div class="card-sigla">EMAB</div>
+        <div class="card-name">Escola do Magistério Benvindos do Lar</div>
+        <span class="card-tag">Magistério</span>
+      </a>
+      <a class="school-card" href="puniv/puniv.html">
+        <div class="card-sigla">PUNIV</div>
+        <div class="card-name">Instituto Politécnico Universal</div>
+        <span class="card-tag">Politécnico</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="cards-section">
+    <p class="section-label">Universidades em Luanda</p>
+    <div class="cards-grid">
+      <a class="school-card" href="uan/uan.html">
+        <div class="card-sigla">UAN</div>
+        <div class="card-name">Universidade Agostinho Neto</div>
+        <span class="card-tag">Pública</span>
+      </a>
+      <a class="school-card" href="isptec/isptec.html">
+        <div class="card-sigla">ISPTEC</div>
+        <div class="card-name">Instituto Superior Politécnico de Tecnologias e Ciências</div>
+        <span class="card-tag">Privada</span>
+      </a>
+      <a class="school-card" href="unipiaget/unipiaget.html">
+        <div class="card-sigla">Uni-Piaget</div>
+        <div class="card-name">Universidade Jean Piaget de Angola</div>
+        <span class="card-tag">Privada</span>
+      </a>
+      <a class="school-card" href="ual/ual.html">
+        <div class="card-sigla">UAL</div>
+        <div class="card-name">Universidade Atlântico de Angola</div>
+        <span class="card-tag">Privada</span>
+      </a>
+      <a class="school-card" href="unilarilambarene/unilarilambarene.html">
+        <div class="card-sigla">UniLARI</div>
+        <div class="card-name">Universidade Lueji A'Nkonde</div>
+        <span class="card-tag">Privada</span>
+      </a>
+      <a class="school-card" href="unimetroangola/unimetroangola.html">
+        <div class="card-sigla">UniMetro</div>
+        <div class="card-name">Universidade Metropolitana de Angola</div>
+        <span class="card-tag">Privada</span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <a href="feed/feed.html">Não encontrou sua escola? Veja a lista completa →</a>
+  </footer>
+
+  <script>
+    const escolas = [
+      { sigla:'ITEL', nome:'Instituto de Telecomunicações de Luanda', tags:['telecomunicações','informatica','electronica','tecnologia','multimédia'], url:'itel/itel.html' },
+      { sigla:'IPIL', nome:'Instituto Politécnico Industrial de Luanda', tags:['industrial','mecanica','quimica','eletricidade','construção civil','informatica','mecatronica','automóvel'], url:'ipil/ipil.html' },
+      { sigla:'IMEL', nome:'Instituto Médio de Economia de Luanda', tags:['economia','contabilidade','gestão','finanças','comercio','administração','comunicação'], url:'imel/imel.html' },
+      { sigla:'IMCL', nome:'Instituto Médio Comercial de Luanda', tags:['comercial','comercio','contabilidade','secretariado','finanças','gestão','recursos humanos'], url:'imcl/imcl.html' },
+      { sigla:'IMPAL', nome:'Instituto Médio Politécnico Alda Lara', tags:['alda lara','eletricidade','construção civil','informatica','politecnico','obras'], url:'alda/alda.html' },
+      { sigla:'IMNE', nome:'Instituto Médio Normal de Educação Marista', tags:['educação','formação de professores','pedagogia','marista','psicopedagogia'], url:'imne/imne.html' },
+      { sigla:'MUTU', nome:'Magistério Primário Mutu-ya-Kevela', tags:['magisterio','formação de professores','primário','educação especial','infância'], url:'mutu/mutu.html' },
+      { sigla:'IMAA', nome:'Instituto Médio de Artes de Angola', tags:['artes','pintura','escultura','design','teatro','dança','música','artes visuais'], url:'imaa/imaa.html' },
+      { sigla:'EMAB', nome:'Escola do Magistério Benvindos do Lar', tags:['magisterio','formação de professores','educação especial','infância','viana'], url:'emab/emab.html' },
+      { sigla:'PUNIV', nome:'Instituto Politécnico Universal', tags:['politecnico','informatica','redes','programação','secretariado','contabilidade','gestão comercial'], url:'puniv/puniv.html' },
+      { sigla:'UAN', nome:'Universidade Agostinho Neto', tags:['universidade','publica','direito','medicina','engenharia','economia','letras','ciencias','enfermagem','agostinho neto'], url:'uan/uan.html' },
+      { sigla:'ISPTEC', nome:'Instituto Superior Politécnico de Tecnologias e Ciências', tags:['universidade','privada','isptec','engenharia','informatica','contabilidade','enfermagem','analises clinicas','telecomunicações'], url:'isptec/isptec.html' },
+      { sigla:'Uni-Piaget', nome:'Universidade Jean Piaget de Angola', tags:['universidade','privada','piaget','medicina','farmacia','fisioterapia','psicologia','direito','engenharia','educação'], url:'unipiaget/unipiaget.html' },
+      { sigla:'UAL', nome:'Universidade Atlântico de Angola', tags:['universidade','privada','atlantico','gestão','direito','jornalismo','comunicação','informatica','marketing'], url:'ual/ual.html' },
+      { sigla:'UniLARI', nome:"Universidade Lueji A'Nkonde", tags:['universidade','privada','lueji','engenharia','direito','relacoes internacionais','administracao publica','gestão'], url:'unilarilambarene/unilarilambarene.html' },
+      { sigla:'UniMetro', nome:'Universidade Metropolitana de Angola', tags:['universidade','privada','metropolitana','medicina','farmacia','petroleo','engenharia','direito','psicologia','contabilidade'], url:'unimetroangola/unimetroangola.html' },
+    ];
+
+    const input = document.getElementById('pesquisa');
+    const botao = document.getElementById('botao');
+    const inf   = document.getElementById('inf');
+    const sugestoes = document.getElementById('sugestoes');
+
+    function norm(s) {
+      return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    }
+    function buscar(t) {
+      const n = norm(t);
+      return escolas.filter(e =>
+        norm(e.sigla).includes(n) ||
+        norm(e.nome).includes(n) ||
+        e.tags.some(tag => norm(tag).includes(n))
+      );
+    }
+    function renderSugestoes(lista) {
+      if (!lista.length) { sugestoes.style.display='none'; return; }
+      sugestoes.innerHTML = lista.map((e,i) =>
+        `<div class="sugestao-item" onclick="location.href='${e.url}'">
+          <span class="sug-sigla">${e.sigla}</span>
+          <span class="sug-nome">${e.nome}</span>
+        </div>${i<lista.length-1?'<div class="sugestao-divider"></div>':''}`
+      ).join('');
+      sugestoes.style.display = 'block';
+    }
+    function pesquisar() {
+      const t = input.value.trim();
+      if (!t) { inf.innerHTML='Digite o nome de uma escola.'; return; }
+      const res = buscar(t);
+      if (res.length === 1) { location.href = res[0].url; return; }
+      if (res.length > 1) { inf.innerHTML=`${res.length} escolas encontradas — selecione abaixo:`; renderSugestoes(res); return; }
+      inf.innerHTML=`Nenhum resultado para "<strong>${t}</strong>". Verifique a grafia.`;
+      sugestoes.style.display='none';
+    }
+    input.addEventListener('input', () => { const r=buscar(input.value.trim()); renderSugestoes(r); });
+    input.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();pesquisar();} });
+    botao.addEventListener('click', pesquisar);
+    document.addEventListener('click', e => { if(!e.target.closest('.search-wrap')&&!e.target.closest('#sugestoes')) sugestoes.style.display='none'; });
+  </script>
+</body>
+</html>
